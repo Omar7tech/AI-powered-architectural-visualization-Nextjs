@@ -1,11 +1,11 @@
 'use client'
-import { Box } from "lucide-react"
+import { Box, Loader } from "lucide-react"
 import Button from "./ui/Button";
 import { useAuth } from "./AuthContext";
 
 
 const Navbar = () => {
-    const { isSignedIn, username, signIn, signOut } = useAuth();
+    const { isSignedIn, username, signIn, signOut, loading } = useAuth();
 
     const handleAuthClick = async () => {
         if (isSignedIn) {
@@ -45,15 +45,23 @@ const Navbar = () => {
                     </ul>
                 </div>
                 <div className="actions">
-                    {isSignedIn ? (
-                        <>
-                            <span className="greeting">{username ? `Hi, ${username}` : "Signed In"}</span>
-                            <Button size="sm" onClick={handleAuthClick}>Log Out</Button>
-                        </>
+                    {loading ? (
+                        <Button size="sm" disabled>
+                            <Loader className="animate-spin h-4 w-4" />
+                        </Button>
                     ) : (
                         <>
-                            <Button size="sm" onClick={handleAuthClick} variant="ghost">Log In</Button>
-                            <a href="#upload" className="cta">Get Started</a>
+                            {isSignedIn ? (
+                                <>
+                                    <span className="greeting">{username ? `Hi, ${username}` : "Signed In"}</span>
+                                    <Button size="sm" onClick={handleAuthClick}>Log Out</Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button size="sm" onClick={handleAuthClick} variant="ghost">Log In</Button>
+                                    <a href="#upload" className="cta">Get Started</a>
+                                </>
+                            )}
                         </>
                     )}
                 </div>

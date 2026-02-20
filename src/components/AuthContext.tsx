@@ -8,6 +8,7 @@ interface AuthContextType {
   refreshAuth: () => Promise<boolean>;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  loading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

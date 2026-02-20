@@ -13,6 +13,7 @@ const DEFAULT_AUTH_STATE: AuthState = {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [authState, setAuthState] = useState<AuthState>(DEFAULT_AUTH_STATE);
+  const [loading, setLoading] = useState(true);
   const refreshAuth = async () => {
     try {
       const user = await getCurrentUser();
@@ -25,6 +26,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {
       setAuthState(DEFAULT_AUTH_STATE);
       return false;
+    } finally {
+      setLoading(false);
     }
   };
   const signIn = async () => {
@@ -43,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...authState, refreshAuth , signIn , signOut }}>
+    <AuthContext.Provider value={{ ...authState, refreshAuth , signIn , signOut, loading }}>
       {children}
     </AuthContext.Provider>
   );
