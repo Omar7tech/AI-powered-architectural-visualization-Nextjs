@@ -2,6 +2,7 @@
 import { Box, Loader } from "lucide-react"
 import Button from "./ui/Button";
 import { useAuth } from "./AuthContext";
+import Link from "next/link";
 
 
 const Navbar = () => {
@@ -37,11 +38,10 @@ const Navbar = () => {
                         </span>
                     </div>
                     <ul className="links">
-                        <a href="#">Product</a>
-                        <a href="#">Pricing</a>
-                        <a href="#">Community</a>
-                        <a href="#">Enterprise</a>
-
+                        <Link href="#">Product</Link>
+                        <Link href="#">Pricing</Link>
+                        <Link href="#">Community</Link>
+                        <Link href="#">Enterprise</Link>
                     </ul>
                 </div>
                 <div className="actions">
@@ -59,7 +59,7 @@ const Navbar = () => {
                             ) : (
                                 <>
                                     <Button size="sm" onClick={handleAuthClick} variant="ghost">Log In</Button>
-                                    <a href="#upload" className="cta">Get Started</a>
+                                    <Link href="#upload" className="cta">Get Started</Link>
                                 </>
                             )}
                         </>
