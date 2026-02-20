@@ -1,6 +1,31 @@
+'use client'
 import { Box } from "lucide-react"
+import Button from "./ui/Button";
+import { useAuth } from "./AuthContext";
+
 
 const Navbar = () => {
+    const { isSignedIn, username, signIn, signOut } = useAuth();
+
+    const handleAuthClick = async () => {
+        if (isSignedIn) {
+            try {
+                await signOut();
+            } catch (error) {
+                console.error("Puter sign out failed:", error);
+            }
+            return;
+        }
+        try {
+            await signIn();
+        } catch (error) {
+            console.error("Puter sign in failed:", error);
+        }
+        return;
+    }
+
+
+
     return (
         <header className="navbar">
             <nav className="inner">
@@ -20,8 +45,17 @@ const Navbar = () => {
                     </ul>
                 </div>
                 <div className="actions">
-                    <button className="login">Log in</button>
-                    <a href="#upload" className="cta">Get Started</a>
+                    {isSignedIn ? (
+                        <>
+                            <span className="greeting">{username ? `Hi, ${username}` : "Signed In"}</span>
+                            <Button size="sm" onClick={handleAuthClick}>Log Out</Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button size="sm" onClick={handleAuthClick} variant="ghost">Log In</Button>
+                            <a href="#upload" className="cta">Get Started</a>
+                        </>
+                    )}
                 </div>
             </nav>
         </header>
