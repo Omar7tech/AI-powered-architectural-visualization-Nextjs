@@ -2,6 +2,7 @@ import { ArrowRight, ArrowUpRight, Clock, Layers } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import Upload from "@/components/Upload";
 
 export const metadata = {
   title: "Roomify",
@@ -37,7 +38,7 @@ export default function Home() {
                 Supports JPG, PNG, formats up tp 10MB
               </p>
             </div>
-            <p>Upload images</p>
+            <Upload />
           </div>
         </div>
 
@@ -69,7 +70,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="arrow">
-                  <ArrowUpRight className="icon" size={18} /> 
+                  <ArrowUpRight className="icon" size={18} />
                 </div>
               </div>
             </div>
