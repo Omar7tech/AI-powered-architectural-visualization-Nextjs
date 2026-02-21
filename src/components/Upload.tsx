@@ -4,8 +4,16 @@ import { useAuth } from './AuthContext';
 import { CheckCircle2, ChevronLeftCircleIcon, ChevronRightIcon, ImageIcon, Layers, UploadIcon } from 'lucide-react';
 import { filesize } from 'filesize';
 import { PROGRESS_INTERVAL_MS, PROGRESS_STEP, REDIRECT_DELAY_MS } from '../../lib/constants';
+import { useRouter } from 'next/navigation';
 
 const Upload = ({ onComplete }: { onComplete?: (base64: string) => void }) => {
+    const router = useRouter();
+    const handleUploadComplete = (base64Image: string) => {
+        const newId = Date.now().toString();
+        router.push(`/visualizer/${newId}`);
+        return true;
+    };
+
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -29,6 +37,7 @@ const Upload = ({ onComplete }: { onComplete?: (base64: string) => void }) => {
                 if (currentProgress >= 100) {
                     clearInterval(interval);
                     setTimeout(() => {
+                        handleUploadComplete(base64);
                         if (onComplete) onComplete(base64);
                     }, REDIRECT_DELAY_MS);
                 }
@@ -41,9 +50,10 @@ const Upload = ({ onComplete }: { onComplete?: (base64: string) => void }) => {
         <div className='upload'>
             {!file ? (
                 <div className={`dropzone ${isDragging ? 'is-dragging' : ''}`}
-                     onDragOver={(e) => { e.preventDefault(); if (isSignedIn) setIsDragging(true); }}
-                     onDragLeave={() => { if (isSignedIn) setIsDragging(false); }}
-                     onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (isSignedIn && e.dataTransfer.files[0]) { processFile(e.dataTransfer.files[0]); } }}>
+
+                    onDragOver={(e) => { e.preventDefault(); if (isSignedIn) setIsDragging(true); }}
+                    onDragLeave={() => { if (isSignedIn) setIsDragging(false); }}
+                    onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (isSignedIn && e.dataTransfer.files[0]) { processFile(e.dataTransfer.files[0]); } }}>
                     <input type="file" className='drop-input' accept='.jpeg,.jpg,.png' onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); processFile(f); } }} disabled={!isSignedIn} />
                     <div className='drop-content'>
                         <div className='drop-icon'>
