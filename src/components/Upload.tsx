@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from './AuthContext';
 import { CheckCircle2, ChevronLeftCircleIcon, ChevronRightIcon, ImageIcon, Layers, UploadIcon } from 'lucide-react';
 import { filesize } from 'filesize';
@@ -22,6 +22,10 @@ const Upload = ({ onComplete }: { onComplete?: (base64: string) => void }) => {
 
     const { isSignedIn } = useAuth();
 
+    const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const mountedRef = useRef(true);
+
     const processFile = (file: File) => {
         setFile(file);
         setStatus('uploading');
@@ -31,20 +35,42 @@ const Upload = ({ onComplete }: { onComplete?: (base64: string) => void }) => {
         reader.onload = () => {
             const base64 = reader.result as string;
             let currentProgress = 0;
-            const interval = setInterval(() => {
-                currentProgress += PROGRESS_STEP;
-                setProgress(currentProgress);
-                if (currentProgress >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        handleUploadComplete(base64);
-                        if (onComplete) onComplete(base64);
-                    }, REDIRECT_DELAY_MS);
+            progressIntervalRef.current = setInterval(() => {
+                if (mountedRef.current) {
+                    currentProgress += PROGRESS_STEP;
+                    setProgress(currentProgress);
+                    if (currentProgress >= 100) {
+                        if (progressIntervalRef.current) {
+                            clearInterval(progressIntervalRef.current);
+                            progressIntervalRef.current = null;
+                        }
+                        redirectTimeoutRef.current = setTimeout(() => {
+                            if (mountedRef.current) {
+                                handleUploadComplete(base64);
+                                if (onComplete) onComplete(base64);
+                            }
+                            redirectTimeoutRef.current = null;
+                        }, REDIRECT_DELAY_MS);
+                    }
                 }
             }, PROGRESS_INTERVAL_MS);
         };
         reader.readAsDataURL(file);
     };
+
+    useEffect(() => {
+        return () => {
+            mountedRef.current = false;
+            if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+                progressIntervalRef.current = null;
+            }
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
+            }
+        };
+    }, []);
 
     return (
         <div className='upload'>
