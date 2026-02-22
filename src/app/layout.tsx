@@ -4,6 +4,7 @@ import "./globals.css";
 
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/components/AuthProvider";
+import { ProjectsProvider } from "@/components/ProjectsContext";
 
 
 const geistSans = Geist({
@@ -32,12 +33,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <Navbar />
-          <main className="min-h-screen bg-background text-foreground relative z-10">
-            {children}
-          </main>
-        </AuthProvider>
+        <ProjectsProvider>
+          <AuthProvider>
+            <Navbar />
+            <main className="min-h-screen bg-background text-foreground relative z-10">
+              {children}
+            </main>
+          </AuthProvider>
+        </ProjectsProvider>
       </body>
     </html>
   );

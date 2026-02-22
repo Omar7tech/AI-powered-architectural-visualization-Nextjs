@@ -1,8 +1,11 @@
+
 import { ArrowRight, ArrowUpRight, Clock, Layers } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Upload from "@/components/Upload";
+import Projects from "@/components/Projects";
+
 
 export const metadata = {
   title: "Roomify",
@@ -11,6 +14,7 @@ export const metadata = {
 
 
 export default function Home() {
+  
   return (
     <div className="home">
       <section className="hero">
@@ -18,6 +22,7 @@ export default function Home() {
           <div className="dot">
             <div className="pulse"></div>
           </div>
+
           <p>Introducing Roomify 21.0</p>
         </div>
         <h1>Build beautiful spaces at the speed of thought with Roomify</h1>
@@ -43,40 +48,7 @@ export default function Home() {
         </div>
 
       </section>
-      <section className="projects">
-        <div className="section-inner">
-          <div className="section-head">
-            <div className="copy">
-              <h2>Projects</h2>
-              <p>Your Latest work and shared community projects, all in one place</p>
-            </div>
-          </div>
-
-          <div className="projects-grid">
-            <div className="project-card group">
-              <div className="preview">
-                <Image alt="Project" src="https://roomify-mlhuk267-dfwu1i.puter.site/projects/1770803585402/rendered.png" width={500} height={500} />
-                <div className="badge">
-                  <span>Community</span>
-                </div>
-              </div>
-              <div className="card-body">
-                <div>
-                  <h3>sdf</h3>
-                  <div className="meta">
-                    <Clock className="icon" />
-                    <span>{new Date().toLocaleDateString()}</span>
-                    <span>By Omar7Tech</span>
-                  </div>
-                </div>
-                <div className="arrow">
-                  <ArrowUpRight className="icon" size={18} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Projects />
     </div>
   );
 }
