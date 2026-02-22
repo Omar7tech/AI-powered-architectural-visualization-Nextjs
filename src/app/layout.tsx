@@ -35,7 +35,6 @@ export default function RootLayout({
       >
         <ProjectsProvider>
           <AuthProvider>
-            <Navbar />
             <main className="min-h-screen bg-background text-foreground relative z-10">
               {children}
             </main>

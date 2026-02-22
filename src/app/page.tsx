@@ -5,6 +5,7 @@ import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Upload from "@/components/Upload";
 import Projects from "@/components/Projects";
+import Navbar from "@/components/Navbar";
 
 
 export const metadata = {
@@ -17,6 +18,8 @@ export default function Home() {
   
   return (
     <div className="home">
+      <Navbar />
+      
       <section className="hero">
         <div className="announce">
           <div className="dot">

@@ -6,6 +6,7 @@ interface ProjectsContextType {
   setProjects: React.Dispatch<React.SetStateAction<DesignItem[]>>;
 }
 
+
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
 
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
