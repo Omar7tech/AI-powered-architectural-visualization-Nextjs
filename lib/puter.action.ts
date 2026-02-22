@@ -31,9 +31,8 @@ export const createProject = async ({item} : CreateProjectParams) : Promise<Desi
         await uploadImageToHosting({hosting, url: item.renderedImage, projectId, label: "rendered"}) : null;
 
     const resolvedSource = hostedSource?.url || item.sourceImage;
-
     const resolvedRender = hostedRender?.url || item.renderedImage;
-    
+
     const {
         sourcePath : _sourcePath , 
         renderedPath : _renderedPath,

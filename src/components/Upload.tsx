@@ -30,7 +30,7 @@ const Upload = ({ onComplete }: { onComplete?: (base64: string) => void }) => {
         }
         newItem.sourceImage = saved.sourcePath || '';
         newItem.renderedImage = saved.renderedPath || null;
-        setProjects((prev) => [newItem , ...prev]);
+        setProjects((prev) => [saved , ...prev]);
 
 
         localStorage.setItem(`project-${newId}`, JSON.stringify({
