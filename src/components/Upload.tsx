@@ -6,42 +6,67 @@ import { CheckCircle2, ChevronLeftCircleIcon, ChevronRightIcon, ImageIcon, Layer
 import { filesize } from 'filesize';
 import { PROGRESS_INTERVAL_MS, PROGRESS_STEP, REDIRECT_DELAY_MS } from '../../lib/constants';
 import { useRouter } from 'next/navigation';
-import { createProject } from '../../lib/puter.action';
+import { createProject, getProjects } from '../../lib/puter.action';
 
 const Upload = ({ onComplete }: { onComplete?: (base64: string) => void }) => {
     const router = useRouter();
     const { isSignedIn } = useAuth();
     const { setProjects } = useProjects();
+    const isCreatingProjectRef = useProjects().isCreatingProjectRef;
 
     const handleUploadComplete = async (base64Image: string) => {
-        const newId = Date.now().toString();
-        const name = `Residence ${newId}`;
-        const newItem: DesignItem = {
-            id: newId,
-            name,
-            sourceImage: base64Image,
-            renderedImage: null,
-            timestamp: Date.now()
-        }
-        const saved = await createProject({item : newItem , visibility : "private"});
-        if(!saved){
-            console.error("Failed to create project");
+        try {
+            if (isCreatingProjectRef.current) return false;
+            isCreatingProjectRef.current = true;
+            console.log("Starting upload process...");
+            
+            const newId = Date.now().toString();
+            const name = `Residence ${newId}`;
+            const newItem: DesignItem = {
+                id: newId,
+                name,
+                sourceImage: base64Image,
+                renderedImage: null,
+                timestamp: Date.now()
+            }
+            console.log("Creating project with item:", { ...newItem, sourceImage: "[base64 data]" });
+            
+            const saved = await createProject({ item: newItem, visibility: "private" });
+            if (!saved) {
+                console.error("Failed to create project - createProject returned null");
+                return false;
+            }
+            console.log("Project created successfully:", saved);
+            
+            newItem.sourceImage = saved.sourcePath || '';
+            newItem.renderedImage = saved.renderedPath || null;
+            setProjects((prev) => [saved, ...prev]);
+
+
+            localStorage.setItem(`project-${newId}`, JSON.stringify({
+                initialImage: saved.sourcePath || '',
+                initialRendered: saved.renderedPath || null,
+                name
+            }));
+
+            console.log("Redirecting to visualizer...");
+            router.push(`/visualizer/${newId}`);
+            return true;
+        } catch (error) {
+            console.error("Failed to create project", error);
             return false;
+        } finally {
+            isCreatingProjectRef.current = false;
         }
-        newItem.sourceImage = saved.sourcePath || '';
-        newItem.renderedImage = saved.renderedPath || null;
-        setProjects((prev) => [saved , ...prev]);
-
-
-        localStorage.setItem(`project-${newId}`, JSON.stringify({
-            initialImage: saved.sourcePath || '',
-            initialRendered: saved.renderedPath || null,
-            name
-        }));
-
-        router.push(`/visualizer/${newId}`);
-        return true;
     };
+
+    useEffect(() => {
+        const fetchProjects = async () => {
+            const items = await getProjects();
+            setProjects(items);
+        }
+        fetchProjects();
+    }, []);
 
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);

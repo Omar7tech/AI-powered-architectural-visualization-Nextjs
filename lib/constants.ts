@@ -1,4 +1,4 @@
-export const PUTER_WORKER_URL = process.env.VITE_PUTER_WORKER_URL || "";
+export const PUTER_WORKER_URL = process.env.NEXT_PUBLIC_PUTER_WORKER_URL || "";
 
 // Storage Paths
 export const STORAGE_PATHS = {

@@ -4,13 +4,16 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { generate3DView } from '../../../../lib/ai.action';
-import { Box, Download, Loader2, RefreshCcw, Share2, X } from 'lucide-react';
+import { Box, Download, RefreshCcw, Share2, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { createProject, getProjectById } from '../../../../lib/puter.action';
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [id, setId] = useState<string | null>(null);
   const [projectData, setProjectData] = useState<any>(null);
+  const [project, setProject] = useState<DesignItem | null>(null);
+  const [isProjectLoading, setIsProjectLoading] = useState(true);
   const hasInitialGenerated = useRef(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentImage, setCurrentImage] = useState<string | null>(projectData?.initialRender || null);
@@ -19,17 +22,28 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     router.push('/');
   }
 
-  const runGeneration = async () => {
-    if (!projectData?.initialImage) {
+  const runGeneration = async (item: DesignItem) => {
+    if (!id || !item.sourceImage) {
       return;
     }
     try {
       setIsProcessing(true);
-      const result = await generate3DView({ sourceImage: projectData.initialImage });
+      const result = await generate3DView({ sourceImage: item.sourceImage });
       if (result.renderedImage) {
         setCurrentImage(result.renderedImage);
-
-
+        const updatedItem = {
+          ...item,
+          renderedImage: result.renderedImage,
+          renderedPath: result.renderedPath,
+          timestamp: Date.now(),
+          ownerId: item.ownerId ?? null,
+          isPublic: item.isPublic ?? false,
+        }
+        const saved = await createProject({ item: updatedItem, visibility: "private" });
+        if (saved) {
+          setProject(saved);
+          setCurrentImage(saved.renderedImage || result.renderedImage);
+        }
       }
     } catch (error) {
       console.error('Failed to generate 3D view:', error);
@@ -39,20 +53,50 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   }
 
   useEffect(() => {
-    if (!projectData?.initialImage || hasInitialGenerated.current) {
+    let isMounted = true;
+
+    const loadProject = async () => {
+      if (!id) {
+        setIsProjectLoading(false);
+        return;
+      }
+
+      setIsProjectLoading(true);
+
+      const fetchedProject = await getProjectById({ id });
+
+      if (!isMounted) return;
+
+      setProject(fetchedProject);
+      setCurrentImage(fetchedProject?.renderedImage || null);
+      setIsProjectLoading(false);
+      hasInitialGenerated.current = false;
+    };
+
+    loadProject();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (
+      isProjectLoading ||
+      hasInitialGenerated.current ||
+      !project?.sourceImage
+    )
       return;
-    }
-    if (projectData.initialRender) {
-      setCurrentImage(projectData.initialRender);
+
+    if (project.renderedImage) {
+      setCurrentImage(project.renderedImage);
       hasInitialGenerated.current = true;
       return;
     }
-    setCurrentImage(projectData.initialImage);
+
     hasInitialGenerated.current = true;
-    runGeneration();
-  }, [projectData?.initialImage, projectData?.initialRender]);
-
-
+    void runGeneration(project);
+  }, [project, isProjectLoading]);
 
   useEffect(() => {
     (async () => {
@@ -84,8 +128,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           <div className='panel-header'>
             <div className='panel-meta'>
               <p>Project</p>
-              <h2>{'untitled project'}</h2>
-              <p className='note'>Created Be You</p>
+              <h2>{project?.name || `Residence ${id}`}</h2>
+              <p className='note'>Created By You</p>
             </div>
             <div className="panel-actions">
               <Button variant="ghost" size="sm" onClick={() => { }} disabled={!currentImage} className="export">
@@ -99,12 +143,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           <div className={`render-area ${isProcessing ? 'is-processing' : ''}`}>
             {
               currentImage ? (
-                  <Image src={currentImage} alt="3D View" width={500} height={500} unoptimized />
+                <img src={currentImage} alt="3D View" width={500} height={500} />
               ) : (
                 <div className='render-placeholder'>
                   {
-                    projectData.initialImage && (
-                      <Image src={projectData.initialImage} alt="Original" className='render-fallback' width={500} height={500} unoptimized />
+                    project?.sourceImage && (
+                      <img src={project.sourceImage} alt="Original" className='render-fallback' width={500} height={500} />
                     )
                   }
                 </div>
@@ -114,9 +158,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             {isProcessing && (
               <div className='render-overlay'>
                 <div className='rendering-card'>
-                  <RefreshCcw className='spinner'/>
-                  <span className='title'>Rendering...</span> 
-                    <span className='subtitle'>Generating your 3D view</span>
+                  <RefreshCcw className='spinner' />
+                  <span className='title'>Rendering...</span>
+                  <span className='subtitle'>Generating your 3D view</span>
                 </div>
               </div>
             )}

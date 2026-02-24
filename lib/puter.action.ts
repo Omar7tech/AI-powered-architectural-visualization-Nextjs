@@ -1,6 +1,7 @@
 import puter from "@heyputer/puter.js";
 import { getOrCreateHostingConfig, uploadImageToHosting } from "./puter.hosting";
 import { isHostedUrl } from "./utils";
+import {PUTER_WORKER_URL} from "./constants";
 
 export const signIn = async () => {
     return await puter.auth.signIn()
@@ -22,7 +23,11 @@ export const isSignedIn = async () => {
     return await puter.auth.isSignedIn()
 }
 
-export const createProject = async ({item} : CreateProjectParams) : Promise<DesignItem | null> => {
+export const createProject = async ({item , visibility = "private"} : CreateProjectParams) : Promise<DesignItem | null> => {
+    if(!PUTER_WORKER_URL) {
+        console.warn("missing VITE_PUTER_WORKER_URL ; skip history fetch");
+        return null;
+    };
     const projectId = item.id;
     const hosting = await getOrCreateHostingConfig();
     const hostedSource = projectId ? 
@@ -46,13 +51,76 @@ export const createProject = async ({item} : CreateProjectParams) : Promise<Desi
         renderedPath : resolvedRender,
     }
 
+    console.log("Sending payload to worker:", payload);
+
     try {
-        // call the  puter worker to store  the project  in kv 
-        
-        return payload;
+        const response = await puter.workers.exec(`${PUTER_WORKER_URL}/api/projects/save` , {method: "POST" , headers: {"Content-Type": "application/json"}, body: JSON.stringify({project: payload , visibility: "public"})})
+        if(!response.ok){
+            const errorText = await response.text();
+            console.error(`Failed To Save Project - Status: ${response.status}`, errorText);
+            return null;
+        }
+        const data = (await response.json()) as {project?: DesignItem | null};
+        console.log("Worker response:", data);
+        return data?.project ?? null;
     } catch (error) {
-        console.warn(`Failed To Save Project : ${error}`);
+        console.error(`Failed To Save Project : ${error}`);
         return null;
     }
        
 }
+
+export const getProjects = async () => {
+    if(!PUTER_WORKER_URL) {
+        console.warn("missing VITE_PUTER_WORKER_URL ; skip history fetch");
+        return [];
+    };
+    try {
+        const response = await puter.workers.exec(`${PUTER_WORKER_URL}/api/projects/list` , {method: "GET"})
+        if(!response.ok){
+            console.warn(`Failed To Fetch Projects` , await response.text());
+            return [];
+        }
+
+        const data = (await response.json()) as {projects?: DesignItem[] | null};
+        return Array.isArray(data?.projects) ? data.projects : [];
+    } catch (error) {
+        console.warn(`Failed To Fetch Projects : ${error}`);
+        return [];
+    }
+    
+}
+
+export const getProjectById = async ({ id }: { id: string }) => {
+    if (!PUTER_WORKER_URL) {
+        console.warn("Missing VITE_PUTER_WORKER_URL; skipping project fetch.");
+        return null;
+    }
+
+    console.log("Fetching project with ID:", id);
+
+    try {
+        const response = await puter.workers.exec(
+            `${PUTER_WORKER_URL}/api/projects/get?id=${encodeURIComponent(id)}`,
+            { method: "GET" },
+        );
+
+        console.log("Fetch project response:", response);
+
+        if (!response.ok) {
+            console.error("Failed to fetch project:", await response.text());
+            return null;
+        }
+
+        const data = (await response.json()) as {
+            project?: DesignItem | null;
+        };
+
+        console.log("Fetched project data:", data);
+
+        return data?.project ?? null;
+    } catch (error) {
+        console.error("Failed to fetch project:", error);
+        return null;
+    }
+};
